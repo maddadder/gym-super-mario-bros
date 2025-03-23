@@ -58,7 +58,7 @@ def main():
         print('--stages,-S should only be specified for RandomStages environments')
         sys.exit(1)
     # build the environment with the given ID
-    env = gym.make(args.env)
+    env = gym.make(args.env, render_mode='human')
     # wrap the environment with an action space if specified
     if args.actionspace != 'nes':
         print(args.actionspace)
