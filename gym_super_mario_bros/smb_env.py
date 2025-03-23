@@ -139,7 +139,7 @@ class SuperMarioBrosEnv(NESEnv):
     def _x_position(self):
         """Return the current horizontal position."""
         # add the current page 0x6d to the current x
-        return np.int64(self.ram[0x6d]) * np.int64(0x100) + np.int64(self.ram[0x86])
+        return np.int32(self.ram[0x6d]) * np.int32(0x100) + np.int32(self.ram[0x86])
 
     @property
     def _left_x_position(self):
@@ -152,7 +152,7 @@ class SuperMarioBrosEnv(NESEnv):
     @property
     def _y_pixel(self):
         """Return the current vertical position."""
-        return self.ram[0x03b8]
+        return np.int32(self.ram[0x03b8])
 
     @property
     def _y_viewport(self):
