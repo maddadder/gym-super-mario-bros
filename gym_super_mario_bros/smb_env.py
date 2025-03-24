@@ -57,6 +57,10 @@ class SuperMarioBrosEnv(NESEnv):
         self._time_last = 0
         # setup a variable to keep track of the last frames x position
         self._x_position_last = 0
+        # setup a variable to keep track of the last conins
+        self._x_coin_last = 0
+        # setup a variable to keep track of the last power level
+        self._power_level_last = 0
         # reset the emulator
         self.reset()
         # skip the start screen
@@ -179,9 +183,15 @@ class SuperMarioBrosEnv(NESEnv):
         return 255 - self._y_pixel
 
     @property
+    def _power_level(self):
+        """Return the player power level"""
+        # powerup state, 0 - Small, 1 - Big, >2 - fiery
+        return min(self.ram[0x0756], 2)
+
+    @property
     def _player_status(self):
         """Return the player status as a string."""
-        return _STATUS_MAP[self.ram[0x0756]]
+        return _STATUS_MAP[self._power_level]
 
     @property
     def _player_state(self):
@@ -333,25 +343,42 @@ class SuperMarioBrosEnv(NESEnv):
             return 0
 
         return _reward
+    
+    @property
+    def _coin_reward(self):
+        """Return the reward for collecting a coins."""
+        _reward = (self._coins - self._x_coin_last) * 0.5
+        self._x_coin_last = self._coins
+
+        # We should only reward the player for collecting coins, if coins are lost then probably the player died
+        _reward = max(_reward, 0)
+        return _reward
+    
+    @property
+    def _power_level_reward(self):
+        """Return the reward powr level."""
+        _reward = (self._power_level - self._power_level_last) * 10
+        self._power_level_last = self._power_level
+        # cap between -10 and 10 since don't care how much power level changes
+        _reward = max(min(_reward, 10), -10)
+        return _reward
 
     @property
     def _time_penalty(self):
         """Return the reward for the in-game clock ticking."""
-        _reward = self._time - self._time_last
+        #_reward = self._time - self._time_last
         self._time_last = self._time
-        # time can only decrease, a positive reward results from a reset and
-        # should default to 0 reward
-        if _reward > 0:
-            return 0
-
-        return _reward
+        # Large negative reward for running out of time
+        if self._time == 0:
+            return -25
+        # Small negative reward for ticking down time to avoid standing still
+        return -0.1
 
     @property
     def _death_penalty(self):
         """Return the reward earned by dying."""
         if self._is_dying or self._is_dead:
             return -25
-
         return 0
 
     # MARK: nes-py API calls
@@ -396,13 +423,19 @@ class SuperMarioBrosEnv(NESEnv):
 
     def _get_reward(self):
         """Return the reward after a step occurs."""
-        return self._x_reward + self._time_penalty + self._death_penalty
+        reward = self._x_reward + self._coin_reward + self._power_level_reward + self._time_penalty + self._death_penalty
+        # print(f"Reward: {reward}")
+        return reward
 
-    def _get_done(self):
+    def _get_terminated(self):
         """Return True if the episode is over, False otherwise."""
         if self.is_single_stage_env:
-            return self._is_dying or self._is_dead or self._flag_get
+            return self._is_dying or self._is_dead
         return self._is_game_over
+    
+    def _get_truncated(self):
+        """Return True if truncated """
+        return self._time == 0
 
     def _get_info(self):
         """Return the info after a step occurs"""
