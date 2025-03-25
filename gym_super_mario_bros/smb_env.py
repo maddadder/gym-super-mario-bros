@@ -357,7 +357,7 @@ class SuperMarioBrosEnv(NESEnv):
     @property
     def _power_level_reward(self):
         """Return the reward powr level."""
-        _reward = (self._power_level - self._power_level_last) * 10
+        _reward = (int(self._power_level) - int(self._power_level_last)) * 10
         self._power_level_last = self._power_level
         # cap between -10 and 10 since don't care how much power level changes
         _reward = max(min(_reward, 10), -10)
