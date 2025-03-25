@@ -366,13 +366,14 @@ class SuperMarioBrosEnv(NESEnv):
     @property
     def _time_penalty(self):
         """Return the reward for the in-game clock ticking."""
-        #_reward = self._time - self._time_last
+        _reward = self._time - self._time_last
         self._time_last = self._time
-        # Large negative reward for running out of time
-        if self._time == 0:
-            return -25
-        # Small negative reward for ticking down time to avoid standing still
-        return -0.1
+        # time can only decrease, a positive reward results from a reset and
+        # should default to 0 reward
+        if _reward > 0:
+            return 0
+
+        return _reward
 
     @property
     def _death_penalty(self):
