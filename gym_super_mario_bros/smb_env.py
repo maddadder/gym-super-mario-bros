@@ -57,10 +57,14 @@ class SuperMarioBrosEnv(NESEnv):
         self._time_last = 0
         # setup a variable to keep track of the last frames x position
         self._x_position_last = 0
+        # setup a variable to keep track of the max x position
+        self._x_position_max = 0
         # setup a variable to keep track of the last conins
         self._x_coin_last = 0
         # setup a variable to keep track of the last power level
         self._power_level_last = 0
+        # setup last stage
+        self._stage_last = 1
         # reset the emulator
         self.reset()
         # skip the start screen
@@ -339,9 +343,24 @@ class SuperMarioBrosEnv(NESEnv):
         # TODO: check whether this is still necessary
         # resolve an issue where after death the x position resets. The x delta
         # is typically has at most magnitude of 3, 5 is a safe bound
-        if _reward < -5 or _reward > 5:
+        if _reward < -5:
             return 0
 
+        # cap the reward at 10
+        _reward = min(_reward, 10)
+        # double the reward if the x position is greater than the max x position
+        if self._x_position > self._x_position_max:
+            _reward *= 2
+
+        self._x_position_max = max(self._x_position, self._x_position_max)
+
+        # if the player is moving to a stage, then we need to resert the x
+        if self._stage_last < self._stage:
+            _reward = 25
+            self._stage_last = self._stage
+            self._x_position_last = 0
+            self._x_position_max = 0
+            print(f"New stage reached: {self._stage}")
         return _reward
     
     @property
@@ -366,14 +385,13 @@ class SuperMarioBrosEnv(NESEnv):
     @property
     def _time_penalty(self):
         """Return the reward for the in-game clock ticking."""
-        _reward = self._time - self._time_last
+        #_reward = self._time - self._time_last
         self._time_last = self._time
-        # time can only decrease, a positive reward results from a reset and
-        # should default to 0 reward
-        if _reward > 0:
-            return 0
-
-        return _reward
+        # Large negative reward for running out of time
+        if self._time == 0:
+            return -25
+        # Small negative reward for ticking down time to avoid standing still
+        return -0.1
 
     @property
     def _death_penalty(self):
@@ -432,11 +450,19 @@ class SuperMarioBrosEnv(NESEnv):
         """Return True if the episode is over, False otherwise."""
         if self.is_single_stage_env:
             return self._is_dying or self._is_dead
+        if self._is_game_over:
+            self._x_coin_last = 0
+            self._power_level_last = 0
+            self._stage_last = 0
+            self._x_position_max = 0
+            self._x_position_last = 0
         return self._is_game_over
     
     def _get_truncated(self):
         """Return True if truncated """
-        return self._time == 0
+        # https://farama.org/Gymnasium-Terminated-Truncated-Step-API
+        # We should not truncate it since the obeserver should have information about the time
+        return False
 
     def _get_info(self):
         """Return the info after a step occurs"""
