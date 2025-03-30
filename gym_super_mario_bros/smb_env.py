@@ -355,9 +355,10 @@ class SuperMarioBrosEnv(NESEnv):
         self._x_position_max = max(self._x_position, self._x_position_max)
 
         # if the player is moving to a stage, then we need to resert the x
-        if self._stage_last < self._stage:
+        if self._stage_last != self._stage:
             _reward = 25
             self._stage_last = self._stage
+            self._time_last = 0
             self._x_position_last = 0
             self._x_position_max = 0
             print(f"New stage reached: {self._stage}")
@@ -451,11 +452,7 @@ class SuperMarioBrosEnv(NESEnv):
         if self.is_single_stage_env:
             return self._is_dying or self._is_dead
         if self._is_game_over:
-            self._x_coin_last = 0
-            self._power_level_last = 0
-            self._stage_last = 0
-            self._x_position_max = 0
-            self._x_position_last = 0
+            self.reset_metrics()
         return self._is_game_over
     
     def _get_truncated(self):
@@ -463,6 +460,15 @@ class SuperMarioBrosEnv(NESEnv):
         # https://farama.org/Gymnasium-Terminated-Truncated-Step-API
         # We should not truncate it since the obeserver should have information about the time
         return False
+    
+    def reset_metrics(self):
+        self._time_last = 0
+        self._x_position_last = 0
+        self._x_position_max = 0
+        self._x_coin_last = 0
+        self._power_level_last = 0
+        self._stage_last = 1
+   
 
     def _get_info(self):
         """Return the info after a step occurs"""
