@@ -1,10 +1,10 @@
-gymnasium
+gymnasium>=1.1.1
 matplotlib>=2.0.2
-git+https://github.com/ItaiBear/nes-py.git@gymnasium#egg=nes-py
-numpy==2.2.0
+git+https://github.com/akanto/nes-py.git@master#egg=nes-py
+numpy>=2.2.0
 opencv-python>=3.4.0.12
 pygame>=1.9.3
-pyglet>=1.3.2
+pyglet>=2.1.3
 setuptools>=39.0.1
 tqdm>=4.19.5
 twine>=1.11.0
