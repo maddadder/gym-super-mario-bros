@@ -79,7 +79,7 @@ class SuperMarioBrosRandomStagesEnv(gym.Env):
         # return the list of seeds used by RNG(s) in the environment
         return [seed]
 
-    def reset(self, seed=None, options=None, return_info=None):
+    def reset(self, seed=None, options=None):
         """
         Reset the state of the environment and returns an initial observation.
 
@@ -114,8 +114,7 @@ class SuperMarioBrosRandomStagesEnv(gym.Env):
         # reset the environment
         return self.env.reset(
             seed=seed,
-            options=options,
-            return_info=return_info
+            options=options
         )
 
     def step(self, action):
